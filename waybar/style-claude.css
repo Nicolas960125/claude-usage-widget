@@ -1,0 +1,72 @@
+/* Claude Code usage widget — Catppuccin Mocha theme
+ *
+ * Color reference (Catppuccin Mocha):
+ *   Base:    #1e1e2e   — widget background
+ *   Surface0: #313244  — hover background
+ *   Mantle:  #181825   — tooltip background
+ *   Mauve:   #cba6f7   — primary accent (default state)
+ *   Yellow:  #f9e2af   — warning state (>=50%)
+ *   Red:     #f38ba8   — critical state (>=80%)
+ *   Text:    #cdd6f4   — tooltip text
+ *
+ * To adapt to another theme, swap the color values below.
+ */
+
+* {
+    font-family: "JetBrains Mono", "Symbols Nerd Font", monospace;
+    font-size: 13px;
+}
+
+window#waybar {
+    background: transparent;
+}
+
+/* Default state — Mauve accent */
+#custom-claude {
+    background: rgba(30, 30, 46, 0.85);
+    color: #cba6f7;
+    border: 1px solid rgba(203, 166, 247, 0.25);
+    border-radius: 14px;
+    padding: 3px 16px;
+    margin: 4px;
+}
+
+#custom-claude:hover {
+    background: rgba(49, 50, 68, 0.95);
+    border-color: rgba(203, 166, 247, 0.5);
+}
+
+/* Warning state (>=50% usage) — Yellow accent */
+#custom-claude.warning {
+    color: #f9e2af;
+    border-color: rgba(249, 226, 175, 0.35);
+}
+
+#custom-claude.warning:hover {
+    border-color: rgba(249, 226, 175, 0.6);
+}
+
+/* Critical state (>=80% usage) — Red accent */
+#custom-claude.critical {
+    color: #f38ba8;
+    border-color: rgba(243, 139, 168, 0.4);
+}
+
+#custom-claude.critical:hover {
+    border-color: rgba(243, 139, 168, 0.7);
+}
+
+/* Tooltip styling */
+tooltip {
+    background: rgba(24, 24, 37, 0.96);
+    color: #cdd6f4;
+    border: 1px solid rgba(203, 166, 247, 0.2);
+    border-radius: 16px;
+    padding: 14px 18px;
+    font-size: 12px;
+}
+
+tooltip label {
+    color: #cdd6f4;
+    font-family: "JetBrains Mono", monospace;
+}

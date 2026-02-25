@@ -1,0 +1,20 @@
+// Claude Code usage widget for Waybar
+// This config runs as a standalone Waybar instance (bottom bar, passthrough).
+// To embed in your existing bar instead, copy the "custom/claude" block
+// into your main Waybar config.
+{
+    "layer": "top",
+    "position": "bottom",
+    "height": 34,
+    "exclusive": false,
+    "passthrough": true,
+    "gtk-layer-shell": true,
+    "modules-center": ["custom/claude"],
+    "custom/claude": {
+        "exec": "python3 ~/.config/waybar/scripts/claude-usage.py",
+        "return-type": "json",
+        "interval": 60,
+        "tooltip": true,
+        "on-click": "python3 ~/.config/waybar/scripts/claude-usage.py > /dev/null"
+    }
+}
