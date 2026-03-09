@@ -64,15 +64,43 @@ StyledPopup {
             Layout.fillWidth: true
         }
 
-        // Footer: last refresh
-        StyledText {
+        // Footer: last refresh + refresh button
+        RowLayout {
             Layout.alignment: Qt.AlignHCenter
-            text: ClaudeUsage.lastRefresh ? `Updated ${ClaudeUsage.lastRefresh}` : ""
-            font {
-                weight: Font.Medium
-                pixelSize: Appearance.font.pixelSize.smaller
+            spacing: 6
+
+            StyledText {
+                text: ClaudeUsage.lastRefresh ? `Updated ${ClaudeUsage.lastRefresh}` : ""
+                font {
+                    weight: Font.Medium
+                    pixelSize: Appearance.font.pixelSize.smaller
+                }
+                color: Appearance.colors.colOnSurfaceVariant
             }
-            color: Appearance.colors.colOnSurfaceVariant
+
+            MouseArea {
+                id: refreshButton
+                width: refreshIcon.width + 8
+                height: refreshIcon.height + 4
+                cursorShape: Qt.PointingHandCursor
+                enabled: !ClaudeUsage.loading
+                onClicked: ClaudeUsage.refresh()
+
+                MaterialSymbol {
+                    id: refreshIcon
+                    anchors.centerIn: parent
+                    text: "refresh"
+                    iconSize: Appearance.font.pixelSize.small
+                    color: refreshButton.containsMouse
+                        ? Appearance.m3colors.m3primary
+                        : Appearance.colors.colOnSurfaceVariant
+                    opacity: ClaudeUsage.loading ? 0.4 : 1.0
+
+                    Behavior on opacity {
+                        NumberAnimation { duration: 200 }
+                    }
+                }
+            }
         }
     }
 }

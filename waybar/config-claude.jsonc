@@ -13,8 +13,9 @@
     "custom/claude": {
         "exec": "python3 ~/.config/waybar/scripts/claude-usage.py",
         "return-type": "json",
-        "interval": 60,
+        "interval": 300,
+        "signal": 8,
         "tooltip": true,
-        "on-click": "python3 ~/.config/waybar/scripts/claude-usage.py > /dev/null"
+        "on-click": "pkill -SIGRTMIN+8 waybar"
     }
 }

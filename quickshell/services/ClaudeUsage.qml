@@ -10,7 +10,9 @@ import qs.modules.common
 Singleton {
     id: root
 
-    readonly property int fetchInterval: 60000 // 60 seconds
+    // Refresh interval in milliseconds. Increase to avoid rate-limiting (429).
+    // Default: 300000 (5 min). Minimum recommended: 60000 (1 min).
+    property int fetchInterval: 300000
 
     property real sessionPct: 0
     property string sessionReset: ""
@@ -30,7 +32,18 @@ Singleton {
     property string errorMessage: ""
     property string lastRefresh: ""
 
+    // Rate-limit guard: minimum 60s between requests
+    property real _lastFetchTime: 0
+    readonly property int _minInterval: 60000
+
     function refresh() {
+        const now = Date.now();
+        const elapsed = now - _lastFetchTime;
+        if (elapsed < _minInterval) {
+            console.warn(`[ClaudeUsage] Throttled: ${Math.ceil((_minInterval - elapsed) / 1000)}s until next allowed request`);
+            return;
+        }
+        _lastFetchTime = now;
         fetcher.running = true;
     }
 
@@ -124,6 +137,7 @@ if not os.path.exists(creds_path):
     sys.exit(0)
 try:
     from urllib.request import Request, urlopen
+    from urllib.error import HTTPError
     creds = json.load(open(creds_path))
     token = creds["claudeAiOauth"]["accessToken"]
     req = Request("https://api.anthropic.com/api/oauth/usage", headers={
@@ -134,6 +148,11 @@ try:
     })
     resp = urlopen(req, timeout=10)
     print(resp.read().decode())
+except HTTPError as e:
+    body = ""
+    try: body = e.read().decode()
+    except: pass
+    print(json.dumps({"error": f"HTTP {e.code}", "status": e.code, "body": body}))
 except Exception as e:
     print(json.dumps({"error": str(e)}))
 `]
@@ -145,6 +164,10 @@ except Exception as e:
                         if (obj.error) {
                             root.error = true;
                             root.errorMessage = obj.error;
+                            if (obj.status === 429) {
+                                console.warn("[ClaudeUsage] 429 rate limited, backing off 2min");
+                                root._lastFetchTime = Date.now() + 60000; // block for 2min total
+                            }
                             root.loading = false;
                             return;
                         }

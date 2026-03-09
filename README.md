@@ -135,7 +135,9 @@ Color thresholds:
 | Widget shows `--` or `!` | Check the Quickshell logs (`journalctl --user -u quickshell`) or run the Waybar script manually |
 | Waybar tooltip doesn't appear | The standalone config uses `passthrough: true` — hover works but clicks pass through. This is by design |
 
-> **Token refresh:** Claude Code's OAuth token can expire. When it does, the widget will show an error. Simply open a new Claude Code session (`claude`) to refresh the token — the widget picks it up automatically on the next poll (every 60s).
+> **Token refresh:** Claude Code's OAuth token can expire. When it does, the widget will show an error. Simply open a new Claude Code session (`claude`) to refresh the token — the widget picks it up automatically on the next poll.
+>
+> **Rate limiting (429):** The default refresh interval is 5 minutes to avoid hitting the API rate limit. You can lower it, but going below 1 minute is not recommended.
 
 ---
 
@@ -145,11 +147,13 @@ Color thresholds:
 
 Edit `~/.config/waybar/style-claude.css` — all colors are documented with their Catppuccin Mocha names. Swap the hex values for your preferred theme.
 
-To change the refresh interval, edit `"interval": 60` in the config (value in seconds).
+To change the refresh interval, edit `"interval": 300` in the config (value in seconds). Click the widget to refresh on demand.
 
 ### Quickshell
 
 The widget uses your Quickshell theme's `Appearance` colors automatically — it follows your system theme out of the box.
+
+To change the refresh interval, edit `fetchInterval` in `ClaudeUsage.qml` (value in milliseconds, default: 300000 = 5 min). Right-click the bar icon or use the refresh button in the popup for on-demand refresh.
 
 ---
 

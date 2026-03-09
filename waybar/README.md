@@ -42,6 +42,13 @@ Instead of running a separate Waybar instance, you can add the module to your ex
 2. Add the `"custom/claude"` block from `config-claude.jsonc`
 3. Add the styles from `style-claude.css` to your stylesheet
 
+## Usage
+
+- **Click** the widget to force an immediate refresh
+- The widget auto-refreshes every 5 minutes by default
+
+To change the interval, edit `"interval"` in `config-claude.jsonc` (value in seconds).
+
 ## Theming
 
 The default theme is **Catppuccin Mocha**. All colors in `style-claude.css` are commented with their Catppuccin names — swap the values to match your theme.
