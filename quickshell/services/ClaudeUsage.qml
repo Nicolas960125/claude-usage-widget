@@ -39,7 +39,7 @@ Singleton {
     function refresh() {
         const now = Date.now();
         const elapsed = now - _lastFetchTime;
-        if (elapsed < _minInterval) {
+        if (elapsed < _minInterval && hasData) {
             console.warn(`[ClaudeUsage] Throttled: ${Math.ceil((_minInterval - elapsed) / 1000)}s until next allowed request`);
             return;
         }
@@ -167,6 +167,10 @@ except Exception as e:
                             if (obj.status === 429) {
                                 console.warn("[ClaudeUsage] 429 rate limited, backing off 2min");
                                 root._lastFetchTime = Date.now() + 60000; // block for 2min total
+                            } else if (!root.hasData) {
+                                // No successful fetch yet (e.g. network not ready), retry soon
+                                console.warn("[ClaudeUsage] Startup fetch failed, retrying in 10s");
+                                retryTimer.restart();
                             }
                             root.loading = false;
                             return;
@@ -182,6 +186,15 @@ except Exception as e:
         onRunningChanged: {
             if (running) root.loading = true;
         }
+    }
+
+    // Retry quickly on startup failures (e.g. network not ready yet)
+    Timer {
+        id: retryTimer
+        running: false
+        repeat: false
+        interval: 10000
+        onTriggered: root.refresh()
     }
 
     Timer {
