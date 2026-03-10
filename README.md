@@ -1,8 +1,8 @@
 # Claude Code Usage Widget
 
-Desktop widgets that show your **Claude Code** usage limits in real time — session (5h window), weekly, and per-model (Sonnet) utilization with reset countdowns.
+Desktop widget that shows your **Claude Code** usage limits in real time — session (5h window), weekly, and per-model (Sonnet) utilization with reset countdowns.
 
-Works with **[Quickshell](https://github.com/quickshell-mirror/quickshell)** (for [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)) and **[Waybar](https://github.com/Alexays/Waybar)**.
+Works with **[Quickshell](https://github.com/quickshell-mirror/quickshell)** (for [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland)).
 
 <!-- ![Screenshot](screenshots/preview.png) -->
 
@@ -51,19 +51,9 @@ You should see something like:
 
 > **If the file doesn't exist:** run `claude` and complete the login flow. The widget cannot work without this file.
 
-### 3. Python 3.6+
+### 3. Quickshell with end-4/dots-hyprland
 
-The API fetch script uses Python's standard library only (no pip packages).
-
-```bash
-python3 --version  # Should be 3.6+
-```
-
-### 4. A supported bar
-
-One of:
-- **Quickshell** with [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) (`ii` config)
-- **Waybar** (any setup — standalone or embedded)
+You need [Quickshell](https://github.com/quickshell-mirror/quickshell) with the [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) `ii` config.
 
 ---
 
@@ -75,26 +65,15 @@ cd claude-usage-widget
 ./install.sh
 ```
 
-The interactive installer will:
+The installer will:
 
 1. **Validate** that `~/.claude/.credentials.json` exists
-2. **Detect** whether you have Quickshell, Waybar, or both
-3. **Ask** which variant(s) to install
-4. **Copy** files to the correct config directories
-5. **Patch** your bar config (or show manual instructions if it can't auto-patch)
+2. **Verify** that Quickshell (end-4/dots-hyprland) is installed
+3. **Copy** files to the correct config directories
+4. **Patch** your bar config (or show manual instructions if it can't auto-patch)
 
 ### Quick test after installing
 
-**Waybar:**
-```bash
-# Test the script directly (should print JSON)
-python3 ~/.config/waybar/scripts/claude-usage.py
-
-# Launch the standalone bar
-waybar -c ~/.config/waybar/config-claude.jsonc -s ~/.config/waybar/style-claude.css
-```
-
-**Quickshell:**
 ```bash
 # Restart Quickshell to load the new widget
 killall qs; qs -c ii
@@ -102,9 +81,7 @@ killall qs; qs -c ii
 
 ### Manual install
 
-If you prefer not to use the installer, see the variant-specific guides:
-- [quickshell/README.md](quickshell/README.md) — file locations, BarContent.qml patch, theming
-- [waybar/README.md](waybar/README.md) — standalone vs embedded, Hyprland autostart
+See [quickshell/README.md](quickshell/README.md) for file locations, BarContent.qml patch, and theming details.
 
 ---
 
@@ -132,8 +109,7 @@ Color thresholds:
 |---|---|
 | `Credentials not found` | Run `claude` and log in, then retry |
 | `Authentication failed (401)` | Your OAuth token expired — restart Claude Code (`claude`) to refresh it, then retry |
-| Widget shows `--` or `!` | Check the Quickshell logs (`journalctl --user -u quickshell`) or run the Waybar script manually |
-| Waybar tooltip doesn't appear | The standalone config uses `passthrough: true` — hover works but clicks pass through. This is by design |
+| Widget shows `--` or `!` | Check the Quickshell logs (`journalctl --user -u quickshell`) |
 
 > **Token refresh:** Claude Code's OAuth token can expire. When it does, the widget will show an error. Simply open a new Claude Code session (`claude`) to refresh the token — the widget picks it up automatically on the next poll.
 >
@@ -143,14 +119,6 @@ Color thresholds:
 
 ## Customization
 
-### Waybar
-
-Edit `~/.config/waybar/style-claude.css` — all colors are documented with their Catppuccin Mocha names. Swap the hex values for your preferred theme.
-
-To change the refresh interval, edit `"interval": 300` in the config (value in seconds). Click the widget to refresh on demand.
-
-### Quickshell
-
 The widget uses your Quickshell theme's `Appearance` colors automatically — it follows your system theme out of the box.
 
 To change the refresh interval, edit `fetchInterval` in `ClaudeUsage.qml` (value in milliseconds, default: 300000 = 5 min). Right-click the bar icon or use the refresh button in the popup for on-demand refresh.
@@ -159,21 +127,10 @@ To change the refresh interval, edit `fetchInterval` in `ClaudeUsage.qml` (value
 
 ## Uninstall
 
-### Quickshell
-
 ```bash
 rm ~/.config/quickshell/ii/services/ClaudeUsage.qml
 rm ~/.config/quickshell/ii/modules/ii/bar/Claude{Bar,UsagePopup,UsageMeter}.qml
 # Then remove the ClaudeBar block from BarContent.qml manually
-```
-
-### Waybar
-
-```bash
-rm ~/.config/waybar/scripts/claude-usage.py
-rm ~/.config/waybar/config-claude.jsonc
-rm ~/.config/waybar/style-claude.css
-# Then remove the exec-once line from ~/.config/hypr/custom/execs.conf
 ```
 
 ---
