@@ -33,6 +33,17 @@ StyledPopup {
             }
         }
 
+        // Error message
+        StyledText {
+            visible: ClaudeUsage.error && ClaudeUsage.errorMessage !== ""
+            text: ClaudeUsage.errorMessage
+            font.pixelSize: Appearance.font.pixelSize.smaller
+            color: Appearance.m3colors.m3error
+            wrapMode: Text.Wrap
+            Layout.fillWidth: true
+            Layout.maximumWidth: 280
+        }
+
         // Session (5h)
         ClaudeUsageMeter {
             title: "Session (5h)"

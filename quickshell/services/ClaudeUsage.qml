@@ -129,25 +129,83 @@ Singleton {
 
     Process {
         id: fetcher
-        command: ["python3", "-c", `
-import json, os, sys
-creds_path = os.path.expanduser("~/.claude/.credentials.json")
-if not os.path.exists(creds_path):
-    print('{"error": "credentials not found"}')
-    sys.exit(0)
-try:
-    from urllib.request import Request, urlopen
-    from urllib.error import HTTPError
-    creds = json.load(open(creds_path))
-    token = creds["claudeAiOauth"]["accessToken"]
-    req = Request("https://api.anthropic.com/api/oauth/usage", headers={
+        command: ["/usr/bin/python3", "-c", `
+import json, os, sys, time
+from urllib.request import Request, urlopen
+from urllib.error import HTTPError
+
+CREDS_PATH = os.path.expanduser("~/.claude/.credentials.json")
+CLIENT_ID = "9d1c250a-e61b-44d9-88ed-5944d1962f5e"
+USAGE_URL = "https://api.anthropic.com/api/oauth/usage"
+TOKEN_URL = "https://console.anthropic.com/v1/oauth/token"
+UA = "claude-code/2.1.72"
+
+def load_creds():
+    if not os.path.exists(CREDS_PATH):
+        return None
+    return json.load(open(CREDS_PATH))
+
+def save_creds(creds):
+    with open(CREDS_PATH, "w") as f:
+        json.dump(creds, f, indent=2)
+
+def refresh_token(creds):
+    oauth = creds["claudeAiOauth"]
+    body = json.dumps({
+        "grant_type": "refresh_token",
+        "refresh_token": oauth["refreshToken"],
+        "client_id": CLIENT_ID,
+    }).encode()
+    req = Request(TOKEN_URL, data=body, headers={"Content-Type": "application/json", "User-Agent": UA}, method="POST")
+    resp = urlopen(req, timeout=10)
+    data = json.loads(resp.read().decode())
+    oauth["accessToken"] = data["access_token"]
+    oauth["refreshToken"] = data["refresh_token"]
+    oauth["expiresAt"] = int(time.time() * 1000) + data.get("expires_in", 28800) * 1000
+    save_creds(creds)
+    return oauth["accessToken"]
+
+def fetch_usage(token):
+    req = Request(USAGE_URL, headers={
         "Authorization": f"Bearer {token}",
         "Content-Type": "application/json",
-        "User-Agent": "claude-code",
+        "User-Agent": UA,
         "anthropic-beta": "oauth-2025-04-20",
     })
-    resp = urlopen(req, timeout=10)
-    print(resp.read().decode())
+    return urlopen(req, timeout=10).read().decode()
+
+creds = load_creds()
+if not creds:
+    print('{"error": "credentials not found"}')
+    sys.exit(0)
+
+try:
+    oauth = creds["claudeAiOauth"]
+    token = oauth["accessToken"]
+    # Proactively refresh if token expires within 5 minutes
+    expires_at = oauth.get("expiresAt", 0)
+    if time.time() * 1000 > expires_at - 300000:
+        try:
+            token = refresh_token(creds)
+        except Exception:
+            pass  # Try with existing token anyway
+    try:
+        print(fetch_usage(token))
+    except HTTPError as e:
+        if e.code in (401, 403):
+            # Token rejected — re-read creds in case claude-code refreshed them
+            creds = load_creds()
+            oauth = creds["claudeAiOauth"]
+            fresh_token = oauth["accessToken"]
+            if fresh_token != token:
+                # claude-code updated the token, use the new one
+                print(fetch_usage(fresh_token))
+            else:
+                # Same token, force refresh
+                token = refresh_token(creds)
+                print(fetch_usage(token))
+        else:
+            raise
 except HTTPError as e:
     body = ""
     try: body = e.read().decode()
@@ -162,15 +220,20 @@ except Exception as e:
                     try {
                         const obj = JSON.parse(text);
                         if (obj.error) {
-                            root.error = true;
-                            root.errorMessage = obj.error;
                             if (obj.status === 429) {
-                                console.warn("[ClaudeUsage] 429 rate limited, backing off 2min");
-                                root._lastFetchTime = Date.now() + 60000; // block for 2min total
-                            } else if (!root.hasData) {
-                                // No successful fetch yet (e.g. network not ready), retry soon
-                                console.warn("[ClaudeUsage] Startup fetch failed, retrying in 10s");
+                                // 429: back off silently, never show error icon
+                                console.warn("[ClaudeUsage] 429 rate limited, retry in 2min");
+                                root._lastFetchTime = Date.now() + 60000;
+                                retryTimer.interval = 120000;
                                 retryTimer.restart();
+                            } else if (!root.hasData) {
+                                root.error = true;
+                                root.errorMessage = obj.error;
+                                console.warn("[ClaudeUsage] Startup fetch failed, retrying in 10s");
+                                retryTimer.interval = 10000;
+                                retryTimer.restart();
+                            } else {
+                                console.warn(`[ClaudeUsage] Error (keeping stale data): ${obj.error}`);
                             }
                             root.loading = false;
                             return;
@@ -193,8 +256,11 @@ except Exception as e:
         id: retryTimer
         running: false
         repeat: false
-        interval: 10000
-        onTriggered: root.refresh()
+        interval: 10000  // overridden dynamically
+        onTriggered: {
+            root._lastFetchTime = 0;  // clear backoff so refresh() won't throttle
+            root.refresh();
+        }
     }
 
     Timer {

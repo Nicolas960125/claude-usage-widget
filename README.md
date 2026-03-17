@@ -85,6 +85,19 @@ See [quickshell/README.md](quickshell/README.md) for file locations, BarContent.
 
 ---
 
+## Update
+
+```bash
+cd claude-usage-widget
+git pull
+./install.sh
+killall qs; qs -c ii
+```
+
+This pulls the latest changes, re-copies the files to your Quickshell config, and restarts the shell.
+
+---
+
 ## What you see
 
 | Metric | Description |
